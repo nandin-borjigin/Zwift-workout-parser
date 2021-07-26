@@ -65,7 +65,7 @@ async function askForOtherInformation(defaultName: string): Promise<Record<'auth
     type: 'input',
     name: 'name',
     default: defaultName,
-    message: '🚴‍♀️ Give workout a name:'
+    message: '🚴 Give workout a name:'
   }, {
     type: 'input',
     name: 'description',

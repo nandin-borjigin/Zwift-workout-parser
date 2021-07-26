@@ -22,3 +22,4 @@ yarn build
 ```
 yarn start
 ```
+_Although the script supports reading workout plan PDF file from arbitrary location, putting the PDF under the project directory will save you from entering the full file path as it automatically reads existing PDF files under the project directory._
