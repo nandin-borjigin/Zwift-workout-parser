@@ -58,13 +58,13 @@ export class SteadyState extends WorkoutSegment {
   static $fromString(str: string): SteadyState | null {
     const match = this.regex.exec(str);
     if (null === match) return null;
-    const duration = parseInt(match[1]);
+    const duration = parseFloat(match[1]);
     const durationMultiplier = match[2] === "秒" ? 1 : 60;
     const power = parseInt(match[3]);
     const cadence = match[4] ? parseInt(match[4]) : null;
     return new SteadyState(duration * durationMultiplier, power / 100, cadence);
   }
-  private static regex = /(\d+)(分钟|秒)(\d+)%(?:[(（](\d+)rpm[)）])?/;
+  private static regex = /(\d+(?:\.\d+)?)(分钟|秒)(\d+)%(?:[(（](\d+)rpm[)）])?/;
 }
 
 export class Interval extends WorkoutSegment {
