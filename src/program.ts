@@ -2,7 +2,7 @@ import fs from "fs";
 import pdf from "pdf-parse";
 import { Workout } from "./Workout";
 import { WorkoutFile } from "./WorkoutFile";
-import { WorkoutSegment } from "./WorkoutSegment";
+import { FailedWorkoutSegement, WorkoutSegment } from "./WorkoutSegment";
 
 export interface Options {
   pdfFilePath: string;
@@ -14,22 +14,29 @@ export interface Options {
 export async function run({ pdfFilePath, author, name, description }: Options) {
   const pdfText = await readPDFText(pdfFilePath);
   const workoutStrings = extractWorkoutStrings(dedupe(pdfText));
+  const failedDays: number[] = [];
   const workoutFiles = workoutStrings.map((str, i) => {
+    const segements = str.trim().split("\n").map(WorkoutSegment.fromString);
+    const containsFailure = segements.includes(FailedWorkoutSegement.shared);
+    const dayNumber = i + 1;
+    if (containsFailure) failedDays.push(dayNumber);
+    const workout = new Workout(segements);
     return new WorkoutFile(
       author,
-      `${name} - Day ${i + 1}`,
+      `${name} - Day ${dayNumber}`,
       description,
-      new Workout(str.trim().split("\n").map(WorkoutSegment.fromString))
+      workout
     );
   });
-  await Promise.all(
-    workoutFiles.map((file) => {
-      return fs.promises.writeFile(
-        `./output/${file.name}.zwo`,
-        file.toXML(0),
-        "utf8"
-      );
-    })
+  await Promise.all(workoutFiles.map(writeWorkoutFile));
+  return failedDays;
+}
+
+function writeWorkoutFile(file: WorkoutFile) {
+  return fs.promises.writeFile(
+    `./output/${file.name}.zwo`,
+    file.toXML(0),
+    "utf8"
   );
 }
 
@@ -53,7 +60,11 @@ function extractWorkoutStrings(text: string) {
   }
 
   return workouts.map((workout) => {
-    return workout.replace(/%/g, "%\n").replace(/\n\+/g, "+").replace(/\n\(/g, "(").replace(/\)(\d)/g, ")\n$1");
+    return workout
+      .replace(/%/g, "%\n")
+      .replace(/\n\+/g, "+")
+      .replace(/\n\(/g, "(")
+      .replace(/\)(\d)/g, ")\n$1");
   });
 }
 
@@ -71,4 +82,3 @@ function dedupe(text: string) {
   }
   return lines.filter((_, i) => !removals.includes(i)).join("\n");
 }
-

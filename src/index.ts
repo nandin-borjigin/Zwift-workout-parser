@@ -79,11 +79,15 @@ async function askForOtherInformation(defaultName: string): Promise<Record<'auth
     const pdfFilePath = await getPDFPath();
     const pdfFileName = path.basename(pdfFilePath)
     const otherInfo = await askForOtherInformation(pdfFileName.substring(0, pdfFileName.lastIndexOf('.')))
-    await run({
+    const daysWithFailure = await run({
       pdfFilePath,
       ...otherInfo
     })
     console.log(chalk.green('All done! Workout files are under ./output directory. Ride On!'))
+    if (daysWithFailure.length > 0) {
+      const [files, are, need] = daysWithFailure.length === 1 ? ['file', 'is', 'needs'] : ['files', 'are', 'need']
+      console.log(chalk.yellow(`Workout ${files} for day ${daysWithFailure.join(', ')} ${are} failed to parse and ${need} mannual effort. :(`))
+    }
     console.log(chalk.magenta.bold('Love you~'))
   } catch (err) {
     console.log(chalk.red(err))

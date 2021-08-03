@@ -2,7 +2,10 @@ import { XMLPart } from "./XMLPart";
 import { makeError, makeIndentationString } from "./utils";
 
 export class WorkoutSegment implements XMLPart {
-  protected constructor(private tag: string, private attributes: Record<string, any>) { }
+  protected constructor(
+    private tag: string,
+    private attributes: Record<string, any>
+  ) {}
 
   toXML(indentation: number): string {
     const _ = makeIndentationString(indentation);
@@ -14,17 +17,27 @@ export class WorkoutSegment implements XMLPart {
   }
 
   static fromString(str: string): WorkoutSegment {
-    let segment: WorkoutSegment | null = null;
-    if (str.includes("组：")) {
-      segment = Interval.$fromString(str);
-    } else {
-      segment = SteadyState.$fromString(str);
+    try {
+      if (str.includes("组：")) {
+        return Interval.$fromString(str) ?? FailedWorkoutSegement.shared;
+      } else {
+        return SteadyState.$fromString(str) ?? FailedWorkoutSegement.shared;
+      }
+    } catch (e) {
+      return FailedWorkoutSegement.shared;
     }
-    if (segment === null) {
-      throw makeError(str);
-    }
-    return segment;
   }
+}
+
+export class FailedWorkoutSegement extends WorkoutSegment {
+  private constructor() {
+    super("", {});
+  }
+  toXML(indentation: number): string {
+    const _ = makeIndentationString(indentation);
+    return `${_}<!-- failed to parse -->`;
+  }
+  static shared = new FailedWorkoutSegement();
 }
 
 export class SteadyState extends WorkoutSegment {
